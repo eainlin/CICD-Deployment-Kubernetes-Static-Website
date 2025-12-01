@@ -74,13 +74,7 @@ sudo chown -f -R $USER ~/.kube
 # logout/login or new shell needed for group changes
 
 # enable basic add-ons
-sudo microk8s enable dns ingress registry
-# optionally enable prometheus/metrics if needed
-
-# install cert-manager (CRDs + controller) using microk8s' kubectl
-sudo microk8s kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.12.0/cert-manager.crds.yaml
-sudo microk8s kubectl create namespace cert-manager || true
-sudo microk8s kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.12.0/cert-manager.yaml
+sudo microk8s enable dns ingress registry cert-manager
 
 # confirm components are running
 sudo microk8s kubectl get pods -n cert-manager
