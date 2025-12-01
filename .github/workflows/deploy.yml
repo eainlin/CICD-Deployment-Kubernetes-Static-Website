@@ -45,8 +45,8 @@ jobs:
             docker pull htops/static-web:latest || true
 
             echo "Updating Kubernetes deployment..."
-            microk8s kubectl set image deployment/static-web static-web=htops/static-web:latest --record || true
+            microk8s kubectl set image deployment/static-site static-web=htops/static-web:latest --record || true
 
             echo "Rolling out deployment..."
-            microk8s kubectl rollout restart deployment/static-web
-            microk8s kubectl rollout status deployment/static-web --timeout=120s
+            microk8s kubectl rollout restart deployment/static-site
+            microk8s kubectl rollout status deployment/static-site --timeout=120s
