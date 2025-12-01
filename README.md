@@ -1,4 +1,4 @@
-# Static Website CI/CD on Ubuntu server
+# Kubernets Static Website CI/CD Process with Github Action
 
 This repository/template shows a simple CI/CD pipeline for a **static website** using:
 
@@ -27,13 +27,13 @@ The instructions assume a public domain (e.g. `example.com`) pointing to your Ub
 ```
 / (repo root)
 ├─ Dockerfile
-├─ action-workflows/
+├─ .github/workflows/
 │  └─ deploy.yml
 ├─ k8s/
 │  ├─ deployment.yaml
 │  ├─ service.yaml
 │  └─ ingress.yaml
-├─ site/  # static file root (index.html, assets...)
+├─ site/index.html 
 └─ README.md
 ```
 
@@ -262,94 +262,47 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Build and push
+      - name: Build and push image
         uses: docker/build-push-action@v5
         with:
           context: .
           file: ./Dockerfile
           push: true
-          tags: dockerhubuser/static-site:latest
+          tags: htops/static-web:latest
 
-      - name: Deploy to server via SSH
+      - name: Deploy to server via SSH (password auth)
         uses: appleboy/ssh-action@v0.1.7
         with:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          password: ${{ secrets.SSH_PASSWORD }}
           port: ${{ secrets.SSH_PORT || 22 }}
           script: |
-            # pull latest image
-            docker pull dockerhubuser/static-site:latest || true
-            # update k8s deployment image
-            microk8s kubectl set image deployment/static-site static-site=dockerhubuser/static-site:latest --record || microk8s kubectl rollout restart deployment/static-site
+            echo "Pulling latest Docker image..."
+            docker pull htops/static-web:latest || true
+
+            echo "Updating Kubernetes deployment..."
+            microk8s kubectl set image deployment/static-site static-web=htops/static-web:latest --record || true
+
+            echo "Rolling out deployment..."
+            microk8s kubectl rollout restart deployment/static-site
             microk8s kubectl rollout status deployment/static-site --timeout=120s
 ```
-
-Notes:
-
-* The SSH action connects to your server and executes microk8s commands to update the deployment.
-* Ensure the GitHub runner's public key is not required; instead, set `SSH_PRIVATE_KEY` to a private key that has access to the server (add its public key to `~/.ssh/authorized_keys` for the `SSH_USER`).
-
 ---
+### Verify Our Pipeline if it is ok or not
 
-## GitHub Secrets to create
+- Access the website the current state from your browser
+![Before_Update](./images/before.png)
+- Edit something in index.html and push to github
+- See the Pipeline Process
+![pipeline](./images/Pipeline.png)
+- Once the pipeline job is done, Access again the website from your browser
+- It will show your changes:
+![after](./images/after.png)
 
-* `DOCKERHUB_USERNAME` - your DockerHub username
-* `DOCKERHUB_TOKEN` - DockerHub access token (or password)
-* `SSH_PRIVATE_KEY` - private key used to SSH into the Ubuntu server
-* `SSH_USER` - remote username (e.g. `ubuntu`)
-* `SSH_HOST` - server IP or hostname
-* `SSH_PORT` - optional port (default 22)
+***The lab is done, Thank you!!!***
 
----
+***Created by Htoo Eain Lin***
 
-## Troubleshooting & tips
 
-* If Ingress or cert-manager fails to issue a certificate, check that port 80 is publicly reachable and that your DNS `A` record for `site.example.com` points to the server IP.
-* Use `microk8s kubectl get events -A` and `microk8s kubectl describe` for debugging.
-* For single-node production use consider using `microk8s enable ha-cluster` or a multi-node cluster.
-* If `microk8s` commands require `sudo` on your server, prefix `microk8s` commands with `sudo` in the workflow SSH script.
 
----
-
-## Minimal quick-start commands (summary)
-
-On Ubuntu server (one-liners):
-
-```bash
-# install microk8s
-sudo snap install microk8s --classic
-sudo usermod -a -G microk8s $USER && newgrp microk8s
-microk8s enable dns ingress registry
-# install cert-manager (see CRD + YAML steps above)
-```
-
-Locally / Github:
-
-* Push code to GitHub (on main)
-* Workflow will build and push to DockerHub, then SSH to server and run `microk8s kubectl set image`.
-
----
-
-## Security notes
-
-* Limit SSH key access and rotate DockerHub tokens regularly.
-* For more secure deployments, consider using a GitHub self-hosted runner on the Ubuntu server and using local `kubectl` context to run `microk8s kubectl apply` directly from the runner instead of SSH.
-
----
-
-## Appendix: Example `kubectl` commands to update manually
-
-```bash
-# on server
-microk8s kubectl set image deployment/static-site static-site=dockerhubuser/static-site:latest
-microk8s kubectl rollout status deployment/static-site
-```
-
----
-
-If you'd like, I can also:
-
-* generate the exact `deploy.yml` with your DockerHub username and domain filled in,
-* provide a ready-to-copy `cluster-issuer.yaml`,
-* or make a script that bootstraps microk8s + cert-manager on the server.

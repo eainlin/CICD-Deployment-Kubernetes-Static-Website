@@ -1,0 +1,21 @@
+# k8s/deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: static-site
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: static-site
+  template:
+    metadata:
+      labels:
+        app: static-site
+    spec:
+      containers:
+        - name: static-site
+          image: dockerhubuser/static-site:latest # updated by deploy step
+          ports:
+            - containerPort: 80
+
