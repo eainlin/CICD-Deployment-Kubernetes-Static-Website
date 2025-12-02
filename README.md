@@ -1,5 +1,10 @@
 # Kubernets Static Website CI/CD Process with Github Action
 
+### Architecture
+![Architecture](./images/Architecture.png)
+
+---
+
 This repository/template shows a simple CI/CD pipeline for a **static website** using:
 
 * **MicroK8s** on an Ubuntu public server (single-node cluster)
@@ -18,7 +23,7 @@ The instructions assume a public domain (e.g. `example.com`) pointing to your Ub
 * Ports 80 and 443 open in firewall/security group.
 * GitHub repository for your static site.
 * DockerHub account and repository (e.g. `dockerhubuser/static-site`).
-* GitHub Actions secrets: `DOCKERHUB_USERNAME`, `DOCKERHUB_TOKEN`, `SSH_PRIVATE_KEY`, `SSH_USER` (e.g. `ubuntu`), `SSH_HOST` (server IP or hostname), `SSH_PORT` (optional, default 22).
+* GitHub Actions secrets: `DOCKERHUB_USERNAME`, `DOCKERHUB_TOKEN`, `SSH_PASSWORD`, `SSH_USER` (e.g. `ubuntu`), `SSH_HOST` (server IP or hostname), `SSH_PORT` (optional, default 22).
 
 ---
 
